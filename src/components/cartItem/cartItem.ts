@@ -2,10 +2,21 @@ import { ProductActions } from "../../flux/Actions";
 import { CartItem, State, store } from "../../flux/Store";
 
 class CartItems extends HTMLElement {
+    private unsubscribe?: () => void;
+
     connectedCallback() {
-        store.subscribe((state: State) => {this.handleChange(state)});
         this.attachShadow({ mode: 'open' });
         this.render();
+
+        this.unsubscribe = store.subscribe((state: State) => { 
+            this.handleChange(state);
+        });
+    }
+
+    disconnectedCallback() {
+        if (this.unsubscribe) {
+            this.unsubscribe();
+        }
     }
 
     handleChange(state: State) {
@@ -15,125 +26,128 @@ class CartItems extends HTMLElement {
     render(state = store.getState()) {
         if (!this.shadowRoot) return;
 
-        
-        const title = this.getAttribute('title') || 'Product Title';
-        const price = this.getAttribute('price') || 0;
-        const description = this.getAttribute('description') || 'Product Description';
-        const image = this.getAttribute('image');
-        const id = this.getAttribute('id');
+        const totalPrice = state.cart.reduce((sum, item) => sum + item.product.price, 0).toFixed(2);
+
         this.shadowRoot.innerHTML = `
 <style>
     .cart-container {
-        position: fixed;
-        top: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 90%;
-        max-width: 800px;
-        background: #1e1e2f;
-        border-bottom: 2px solid #6a0dad;
-        border-radius: 0 0 10px 10px;
-        padding: 10px 20px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-        z-index: 1000;
+        background: #f9f9ff;
+        border: 2px solid #e3e3ff;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        max-width: 900px;
+        margin-inline: auto;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
         font-family: 'Poppins', sans-serif;
     }
 
     .cart-title {
-        color: #ffd700;
-        margin-bottom: 10px;
-        font-size: 1.1em;
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #333;
+    }
+
+    .total-price {
+        font-size: 1.1rem;
+        color: #444;
+        margin-bottom: 1rem;
     }
 
     .cart-items {
-        list-style: none;
-        padding: 0;
-        margin: 0;
         display: flex;
         flex-direction: column;
-        gap: 10px;
-        max-height: 300px;
+        gap: 1rem;
+        max-height: 400px;
         overflow-y: auto;
     }
 
     .cart-item {
-        background: #2d2d44;
-        border-radius: 8px;
         display: flex;
         align-items: center;
-        padding: 10px;
-        color: white;
-        gap: 15px;
+        gap: 1rem;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 1rem;
+        transition: transform 0.2s;
+    }
+
+    .cart-item:hover {
+        transform: scale(1.01);
     }
 
     .cart-item img {
-        width: 60px;
-        height: 60px;
+        width: 100px;
+        height: 100px;
         object-fit: cover;
-        border-radius: 6px;
+        border-radius: 8px;
         flex-shrink: 0;
     }
 
-    .cart-info {
-        display: flex;
-        flex-direction: column;
+    .info {
         flex-grow: 1;
     }
 
-    .cart-info h3 {
+    .info h2 {
         margin: 0;
-        font-size: 1em;
-        color: #ffccff;
+        font-size: 1.1rem;
+        color: #222;
     }
 
-    .cart-info p {
-        margin: 3px 0;
-        font-size: 0.85em;
-        color: #dddddd;
+    .info p {
+        margin: 0.3rem 0;
+        font-size: 0.9rem;
+        color: #666;
     }
 
-    .cart-info span {
-        font-weight: bold;
-        color: #ffd700;
-        font-size: 0.9em;
+    .info h3 {
+        margin: 0.5rem 0 0 0;
+        font-size: 1rem;
+        color: #4a4a4a;
     }
 
     .remove {
-        background-color: #ff4d4d;
+        background-color: #4b0082;
         border: none;
-        padding: 6px 10px;
-        border-radius: 6px;
-        cursor: pointer;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
         color: white;
-        font-size: 0.8em;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 0.9rem;
         transition: 0.2s;
     }
 
     .remove:hover {
-        background-color: #cc0000;
+        background-color:rgb(49, 3, 81);
     }
 </style>
 
-
-
-            <ul class="cart-items">
-                ${state.cart.map ((cartItem: CartItem) => {
-                return`
-                    <li class="cart-item">
-                        <img src="${cartItem.product.image}" alt="${cartItem.product.title}">
+<div class="cart-container">
+    <div class="cart-title">Productos en el carrito</div>
+    <div class="total-price">Total: $${totalPrice}</div>
+    <ul class="cart-items">
+        ${state.cart.map((cartItem: CartItem) => {
+            return `
+                <li class="cart-item">
+                    <img src="${cartItem.product.image}" alt="${cartItem.product.title}" />
+                    <div class="info">
                         <h2>${cartItem.product.title}</h2>
                         <p>${cartItem.product.description}</p>
                         <h3>$${cartItem.product.price}</h3>
-                        <button class="remove" id="${cartItem.id}">Remove</button>
-                    </li>
-                `}).join("")}
-            </ul>
+                    </div>
+                    <button class="remove" id="${cartItem.id}">Eliminar</button>
+                </li>
+            `;
+        }).join("")}
+    </ul>
+</div>
         `;
 
-        console.log("PRODUCTOS DESDE EL COMPONENTE DE CARRITO", state.products);
-
-        const removeButton = this.shadowRoot.querySelectorAll('.remove');
-        removeButton.forEach((button) => {
+        const removeButtons = this.shadowRoot.querySelectorAll('.remove');
+        removeButtons.forEach((button) => {
             button.addEventListener('click', () => {
                 const id = button.getAttribute('id');
                 if (id) {

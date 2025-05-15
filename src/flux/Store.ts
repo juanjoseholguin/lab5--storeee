@@ -97,9 +97,13 @@ class Store {
         }
     }
 
-    subscribe(listener: Listener): void {
+    subscribe(listener: Listener): () => void {
         this._listeners.push(listener);
         listener(this.getState());
+
+        return () => {
+            this.unsubscribe(listener);
+        };
     }
 
     unsubscribe(listener: Listener): void {
@@ -113,7 +117,7 @@ class Store {
     }
 
     async load(): Promise<void> {
-        
+        // Aquí sigue tu lógica de caching (network first, cache only, etc) intacta
         const persistedState = localStorage.getItem('flux:state');
         if (persistedState) {
             const parsed = JSON.parse(persistedState);
@@ -122,12 +126,11 @@ class Store {
             }
         }
 
-        
         try {
             const products = await getProducts();
             this._myState.products = products;
         } catch (error) {
-            console.error("Error al cargar prodctos desde la red :ccc", error);
+            console.error("Error al cargar productos desde la red :ccc", error);
         }
 
         this._emitChange();
