@@ -117,7 +117,7 @@ class Store {
     }
 
     async load(): Promise<void> {
-        // Aquí sigue tu lógica de caching (network first, cache only, etc) intacta
+        
         const persistedState = localStorage.getItem('flux:state');
         if (persistedState) {
             const parsed = JSON.parse(persistedState);

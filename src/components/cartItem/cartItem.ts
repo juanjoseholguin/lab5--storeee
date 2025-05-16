@@ -46,12 +46,12 @@ class CartItems extends HTMLElement {
         font-size: 1.4rem;
         font-weight: 600;
         margin-bottom: 0.5rem;
-        color: #333;
+        color: #6a0dad;
     }
 
     .total-price {
         font-size: 1.1rem;
-        color: #444;
+        color:rgb(222, 193, 31);
         margin-bottom: 1rem;
     }
 
